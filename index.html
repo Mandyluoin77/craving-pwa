@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>רגע אחד</title>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1f2937">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #111827;
+      color: #f9fafb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .container {
+      max-width: 320px;
+      width: 100%;
+      padding: 24px;
+    }
+    button {
+      width: 100%;
+      padding: 20px;
+      font-size: 20px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+    }
+    .secondary {
+      background: #374151;
+      margin-top: 12px;
+    }
+    .timer {
+      font-size: 48px;
+      margin: 20px 0;
+    }
+    .text {
+      opacity: 0.85;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container" id="app"></div>
+
+  <script>
+    const app = document.getElementById("app");
+    let interval;
+    let remaining = 600;
+const calmingTexts = [
+  "אתה לא חייב להחליט עכשיו.",
+  "הרצון הזה יודע גם להיעלם.",
+  "עוד כמה דקות זה עובר.",
+  "לא נלחמים, רק מחכים רגע.",
+  "אם בסוף תרצה – זה בסדר.",
+  "זה רק גל. הוא יורד.",
+  "הגוף מבקש הרגל, לא צורך.",
+  "אתה בשליטה, גם אם זה לא מרגיש ככה.",
+  "הרבה פעמים זה נגמר לבד.",
+  "קח נשימה אחת, זה מספיק."
+];
+
+let textIndex = 0;
+
+
+    function saveResult(result) {
+      const data = JSON.parse(localStorage.getItem("cravings") || "[]");
+      data.push({ time: new Date().toISOString(), result });
+      localStorage.setItem("cravings", JSON.stringify(data));
+    }
+
+    function start() {
+      remaining = 600;
+      renderTimer();
+      interval = setInterval(() => {
+        remaining--;
+        renderTimer();
+        if (remaining <= 0) {
+          clearInterval(interval);
+          renderEnd();
+        }
+      }, 1000);
+    }
+
+   function renderStart() {
+  app.innerHTML = `
+    <p class="text">אם בא לך סיגריה – לא צריך להילחם בזה.</p>
+    <button id="startBtn">בא לי סיגריה</button>
+  `;
+
+  document.getElementById("startBtn").addEventListener("click", start);
+}
+
+    function renderTimer() {
+  const minutes = String(Math.floor(remaining / 60)).padStart(2, "0");
+  const seconds = String(remaining % 60).padStart(2, "0");
+
+  const text = calmingTexts[textIndex % calmingTexts.length];
+
+  app.innerHTML = `
+    <p class="text">${text}</p>
+    <div class="timer">${minutes}:${seconds}</div>
+  `;
+
+  if (remaining % 25 === 0) {
+    textIndex++;
+  }
+}
+
+
+    function renderEnd() {
+      app.innerHTML = `
+        <p class="text">מה קרה בסוף?</p>
+        <button onclick="saveResult('עבר לי'); renderStart()">עבר לי</button>
+        <button class="secondary" onclick="saveResult('עישנתי'); renderStart()">עישנתי</button>
+      `;
+    }
+
+    renderStart();
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+</body>
+</html>
