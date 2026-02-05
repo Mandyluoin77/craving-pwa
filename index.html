@@ -41,7 +41,7 @@ body{
   100% { background-image:url('./bg1.png'); }
 }
 
-/* שכבת כהות עדינה בלבד */
+/* שכבת כהות עדינה */
 #overlay{
   position:fixed;
   inset:0;
@@ -62,8 +62,8 @@ body{
   padding:24px;
 }
 
-.text{font-size:22px;margin-bottom:16px;}
-.timer{font-size:44px;margin-bottom:20px;}
+.text{font-size:22px;margin-bottom:14px;}
+.timer{font-size:44px;margin-bottom:16px;}
 
 .buttons{
   width:100%;
@@ -73,9 +73,9 @@ body{
   gap:12px;
 }
 
-button,a{
+button,a,input{
   display:block;
-  padding:16px;
+  padding:14px;
   font-size:16px;
   border:none;
   border-radius:14px;
@@ -83,8 +83,9 @@ button,a{
   color:white;
   text-decoration:none;
   text-align:center;
-  cursor:pointer;
 }
+
+input{background:#1f2933;}
 
 .primary{background:#2563eb;}
 .info{background:#065f46;}
@@ -110,13 +111,13 @@ button,a{
 </audio>
 
 <script>
-/* נטרול Service Worker לדף הזה בלבד */
+// נטרול Service Worker לדף הזה
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations()
     .then(r => r.forEach(reg => reg.unregister()));
 }
 
-/* טקסטים */
+/* ===== נתונים ===== */
 const texts=[
   "אין צורך למהר.",
   "עוד רגע של שקט.",
@@ -124,13 +125,16 @@ const texts=[
   "אפשר פשוט להיות כאן.",
   "זה יעבור גם בלי פעולה."
 ];
+
 let currentText="";
-let remaining=600;
-let timer;
+let remaining=3600;   // 60 דקות
+let timer=null;
+let startTime=null;
 
 const app=document.getElementById("app");
 const audio=document.getElementById("audio");
 
+/* ===== פונקציות ===== */
 function randomText(){
   let t;
   do{
@@ -141,6 +145,9 @@ function randomText(){
 }
 
 function start(){
+  if(timer) return;
+  startTime = Date.now();
+
   audio.volume=0.6;
   audio.play().catch(()=>{});
 
@@ -150,6 +157,24 @@ function start(){
     if(remaining<=0) clearInterval(timer);
     render(false);
   },1000);
+}
+
+function calcSavings(){
+  const cigs = Number(document.getElementById("cigsPerDay").value);
+  const price = Number(document.getElementById("packPrice").value);
+  const result = document.getElementById("result");
+
+  if(!cigs || !price || !startTime){
+    result.innerText = "נא להזין נתונים ולהתחיל.";
+    return;
+  }
+
+  const minutesPassed = (Date.now() - startTime) / 60000;
+  const avoidedCigs = Math.floor(minutesPassed * (cigs / 1440));
+  const savedMoney = (avoidedCigs * (price / 20)).toFixed(2);
+
+  result.innerText =
+    `🚭 ${avoidedCigs} סיגריות | 💰 ₪${savedMoney} נחסכו`;
 }
 
 function render(changeText){
@@ -163,6 +188,11 @@ function render(changeText){
 
     <div class="buttons">
       <button onclick="render(true)">דלג</button>
+
+      <input id="cigsPerDay" type="number" placeholder="סיגריות ביום">
+      <input id="packPrice" type="number" placeholder="מחיר חפיסה (₪)">
+      <button onclick="calcSavings()">חשב חיסכון</button>
+      <div id="result" class="text"></div>
 
       <a class="info"
          href="https://he.wikipedia.org/wiki/הפסקת_עישון"
@@ -182,4 +212,3 @@ function render(changeText){
 
 </body>
 </html>
-
