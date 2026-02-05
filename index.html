@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Just a Moment</title>
 
+<!-- ניתוק השפעת PWA על הדף הזה -->
+<meta name="apple-mobile-web-app-capable" content="no">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <style>
 html,body{
   margin:0;
@@ -57,23 +63,25 @@ html,body{
   width:100%;
   max-width:420px;
   display:flex;
-  flex-wrap:wrap;
+  flex-direction:column;
   gap:12px;
-  justify-content:center;
 }
 
-/* ===== כפתורים ===== */
-button{
-  padding:14px 18px;
+/* ===== כפתורים / לינקים ===== */
+button,a{
+  display:block;
+  padding:16px;
   font-size:16px;
   border:none;
   border-radius:14px;
-  background:#2563eb;
+  background:#374151;
   color:white;
+  text-decoration:none;
+  text-align:center;
   cursor:pointer;
-  min-width:140px;
 }
-.secondary{background:#374151;}
+
+.primary{background:#2563eb;}
 .info{background:#065f46;}
 
 .start-btn{
@@ -90,30 +98,31 @@ button{
 
 <div id="app">
   <div class="text">אם בא לך סיגריה — בוא נשהה רגע.</div>
-  <button class="start-btn" onclick="start()">התחל</button>
+  <button class="primary start-btn" onclick="start()">התחל</button>
 </div>
 
-<audio id="audio" src="./ambient_brown_ok.wav" loop></audio>
-
 <script>
-/* ===== תמונות רקע (נתיב מפורש) ===== */
-const images=[
-  "./bg1.png","./bg2.png","./bg3.png","./bg4.png","./bg5.png",
-  "./bg6.png","./bg7.png","./bg8.png","./bg9.png","./bg10.png","./bg11.png"
-];
-const bg=document.getElementById("bg");
-let imgIndex=0;
+/* ===== ביטול Service Worker לדף הזה בלבד ===== */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(r=>r.unregister());
+  });
+}
 
-function setBg(){
-  bg.style.backgroundImage="url('"+images[imgIndex]+"')";
+/* ===== תמונות רקע – נתיב יחסי ישיר ===== */
+const images=[
+  "bg1.png","bg2.png","bg3.png","bg4.png","bg5.png",
+  "bg6.png","bg7.png","bg8.png","bg9.png","bg10.png","bg11.png"
+];
+let imgIndex=0;
+const bg=document.getElementById("bg");
+
+function rotateBg(){
+  bg.style.backgroundImage="url('"+images[imgIndex]+"?v="+Date.now()+"')";
   imgIndex=(imgIndex+1)%images.length;
 }
-setBg();
-setInterval(setBg,12000);
-
-/* ===== אודיו ===== */
-const audio=document.getElementById("audio");
-audio.volume=0.6;
+rotateBg();
+setInterval(rotateBg,12000);
 
 /* ===== טקסטים ===== */
 const texts=[
@@ -128,7 +137,7 @@ let currentText="";
 
 /* ===== טיימר ===== */
 let remaining=600;
-let timer,textTimer,paused=false;
+let timer;
 const app=document.getElementById("app");
 
 function randomText(){
@@ -140,27 +149,13 @@ function randomText(){
   return t;
 }
 
-function openLink(url){
-  location.href=url;
-}
-
 function start(){
-  audio.play().catch(()=>{});
   render(true);
-
   timer=setInterval(()=>{
-    if(paused) return;
     remaining--;
-    if(remaining<=0){
-      clearInterval(timer);
-      clearInterval(textTimer);
-    }
+    if(remaining<=0) clearInterval(timer);
     render(false);
   },1000);
-
-  textTimer=setInterval(()=>{
-    if(!paused) render(true);
-  },8000);
 }
 
 function render(changeText){
@@ -173,18 +168,28 @@ function render(changeText){
     <div class="timer">${m}:${s}</div>
 
     <div class="buttons">
-      <button class="secondary" onclick="render(true)">דלג</button>
-      <button class="secondary" onclick="paused=!paused">${paused?"המשך":"השהה"}</button>
-      <button class="secondary" onclick="audio.muted=!audio.muted">${audio.muted?"סאונד":"השתק"}</button>
-    </div>
+      <button onclick="render(true)">דלג</button>
 
-    <div class="buttons">
-      <button class="info" onclick="openLink('https://he.wikipedia.org/wiki/הפסקת_עישון')">
-        עזרה להפסקת עישון
-      </button>
-      <button class="secondary" onclick="openLink('https://www.youtube.com/watch?v=gnSEv8ZsK0E')">
-        מה קורה לדחף? (וידאו קצר)
-      </button>
+      <a class="info"
+         href="https://he.wikipedia.org/wiki/הפסקת_עישון"
+         target="_blank"
+         rel="noopener noreferrer">
+         עזרה להפסקת עישון
+      </a>
+
+      <a
+         href="https://en.wikipedia.org/wiki/Nicotine_withdrawal"
+         target="_blank"
+         rel="noopener noreferrer">
+         מה קורה לדחף?
+      </a>
+
+      <a
+         href="https://www.youtube.com/watch?v=gukm--w36PI"
+         target="_blank"
+         rel="noopener noreferrer">
+         וידאו – התמודדות עם דחף
+      </a>
     </div>
   `;
 }
