@@ -15,8 +15,25 @@ html,body{
   color:white;
 }
 
+/* ===== רקע מתחלף ===== */
 body{
-  background:url('./bg1.png') center/cover no-repeat fixed;
+  background-size:cover;
+  background-position:center;
+  animation:bgSlide 66s infinite;
+}
+
+@keyframes bgSlide{
+  0%   { background-image:url('./bg1.png'); }
+  10%  { background-image:url('./bg2.png'); }
+  20%  { background-image:url('./bg3.png'); }
+  30%  { background-image:url('./bg4.png'); }
+  40%  { background-image:url('./bg5.png'); }
+  50%  { background-image:url('./bg6.png'); }
+  60%  { background-image:url('./bg7.png'); }
+  70%  { background-image:url('./bg8.png'); }
+  80%  { background-image:url('./bg9.png'); }
+  90%  { background-image:url('./bg10.png'); }
+  100% { background-image:url('./bg11.png'); }
 }
 
 #overlay{
@@ -33,18 +50,18 @@ body{
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  padding:24px;
   text-align:center;
-}
-
-.timer{
-  font-size:48px;
-  margin-bottom:12px;
+  padding:24px;
 }
 
 .text{
   font-size:22px;
-  margin-bottom:16px;
+  margin-bottom:14px;
+}
+
+.timer{
+  font-size:48px;
+  margin-bottom:20px;
 }
 
 .block{
@@ -53,31 +70,22 @@ body{
   display:flex;
   flex-direction:column;
   gap:12px;
-  margin-top:16px;
 }
 
-button,input,a{
+button,a{
   padding:16px;
   border-radius:14px;
   border:none;
   font-size:16px;
   text-align:center;
+  background:#374151;
+  color:white;
   text-decoration:none;
 }
 
-button{background:#374151;color:white;cursor:pointer;}
 .primary{background:#2563eb;}
-.success{background:#065f46;color:white;}
+.success{background:#065f46;}
 
-input{
-  background:#1f2933;
-  color:white;
-}
-
-.result{
-  font-size:18px;
-  margin-top:8px;
-}
 </style>
 </head>
 
@@ -87,7 +95,10 @@ input{
 
 <div id="app">
 
-  <div id="message" class="text">אם בא לך סיגריה — בוא נשהה רגע.</div>
+  <div id="message" class="text">
+    אם בא לך סיגריה — בוא נשהה רגע.
+  </div>
+
   <div id="timer" class="timer">10:00</div>
 
   <div class="block">
@@ -95,14 +106,7 @@ input{
     <button onclick="nextText()">דלג</button>
   </div>
 
-  <div class="block">
-    <input id="cigsPerDay" type="number" placeholder="סיגריות ביום">
-    <input id="packPrice" type="number" placeholder="מחיר חפיסה (₪)">
-    <button onclick="calcSavings()">חשב חיסכון</button>
-    <div id="calcResult" class="result"></div>
-  </div>
-
-  <div class="block">
+  <div class="block" style="margin-top:20px">
     <a class="success"
        href="https://he.wikipedia.org/wiki/הפסקת_עישון"
        target="_blank" rel="noopener">
@@ -118,35 +122,31 @@ input{
 
 </div>
 
-<audio id="audio">
+<audio id="audio" preload="auto">
   <source src="./ambient_brown_ok.wav" type="audio/wav">
 </audio>
 
 <script>
-// ===== טקסטים רב-לשוניים =====
+/* ===== טקסטים ===== */
 const texts = [
-  {text:"אין צורך למהר.", lang:"he"},
-  {text:"עוד רגע של שקט.", lang:"he"},
-  {text:"הדחף ידע להירגע.", lang:"he"},
-  {text:"אפשר פשוט להיות כאן.", lang:"he"},
-  {text:"זה יעבור גם בלי פעולה.", lang:"he"},
+  {t:"אין צורך למהר.", d:"rtl"},
+  {t:"עוד רגע של שקט.", d:"rtl"},
+  {t:"הדחף ידע להירגע.", d:"rtl"},
+  {t:"אפשר פשוט להיות כאן.", d:"rtl"},
+  {t:"זה יעבור גם בלי פעולה.", d:"rtl"},
 
-  {text:"Just stay with the moment.", lang:"en"},
-  {text:"You don’t need to decide now.", lang:"en"},
-  {text:"This feeling will pass.", lang:"en"},
-  {text:"Breathe. Nothing else is required.", lang:"en"}
+  {t:"Just stay with the moment.", d:"ltr"},
+  {t:"You don’t need to decide now.", d:"ltr"},
+  {t:"This feeling will pass.", d:"ltr"}
 ];
 
-// ===== מצב =====
-let remaining = 600; // 10 דקות
-let timerInterval = null;
-let startTime = null;
+let remaining = 600;
+let timerInt = null;
 
-const message = document.getElementById("message");
+const msg = document.getElementById("message");
 const timerEl = document.getElementById("timer");
 const audio = document.getElementById("audio");
 
-// ===== טיימר =====
 function updateTimer(){
   const m = String(Math.floor(remaining/60)).padStart(2,"0");
   const s = String(remaining%60).padStart(2,"0");
@@ -154,50 +154,22 @@ function updateTimer(){
 }
 
 function start(){
-  if(timerInterval) return;
+  if(timerInt) return;
 
-  startTime = Date.now();
   audio.volume = 0.6;
   audio.play().catch(()=>{});
 
-  timerInterval = setInterval(()=>{
+  timerInt = setInterval(()=>{
     remaining--;
     updateTimer();
-    if(remaining<=0) clearInterval(timerInterval);
+    if(remaining<=0) clearInterval(timerInt);
   },1000);
 }
 
-// ===== טקסט =====
 function nextText(){
-  const item = texts[Math.floor(Math.random()*texts.length)];
-  message.innerText = item.text;
-  message.style.direction = item.lang === "en" ? "ltr" : "rtl";
-}
-
-// ===== מחשבון =====
-function calcSavings(){
-  const cigs = Number(document.getElementById("cigsPerDay").value);
-  const price = Number(document.getElementById("packPrice").value);
-  const result = document.getElementById("calcResult");
-
-  if(!cigs || !price || !startTime){
-    result.innerText = "נא להזין נתונים ולהתחיל.";
-    return;
-  }
-
-  const minutes = (Date.now() - startTime) / 60000;
-  const cigsPerMin = cigs / 1440;
-  const pricePerCig = price / 20;
-
-  const avoided = minutes * cigsPerMin;
-  const savedNow = avoided * pricePerCig;
-  const savedDay = cigs * pricePerCig;
-  const savedMonth = savedDay * 30;
-
-  result.innerText =
-    `🚭 עד עכשיו: ${avoided.toFixed(2)} סיגריות\n` +
-    `💰 נחסכו ₪${savedNow.toFixed(2)}\n` +
-    `📅 ביום: ₪${savedDay.toFixed(2)} | 📆 בחודש: ₪${savedMonth.toFixed(0)}`;
+  const r = texts[Math.floor(Math.random()*texts.length)];
+  msg.innerText = r.t;
+  msg.style.direction = r.d;
 }
 
 updateTimer();
