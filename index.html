@@ -11,8 +11,8 @@ html,body{
   padding:0;
   width:100%;
   height:100%;
-  color:white;
   font-family:system-ui,sans-serif;
+  color:white;
 }
 
 body{
@@ -37,8 +37,15 @@ body{
   text-align:center;
 }
 
-.timer{font-size:48px;margin-bottom:20px;}
-.text{font-size:22px;margin-bottom:16px;}
+.timer{
+  font-size:48px;
+  margin-bottom:12px;
+}
+
+.text{
+  font-size:22px;
+  margin-bottom:16px;
+}
 
 .block{
   width:100%;
@@ -46,23 +53,31 @@ body{
   display:flex;
   flex-direction:column;
   gap:12px;
+  margin-top:16px;
 }
 
-button,input{
+button,input,a{
   padding:16px;
   border-radius:14px;
   border:none;
   font-size:16px;
   text-align:center;
+  text-decoration:none;
 }
 
-button{background:#374151;color:white;}
+button{background:#374151;color:white;cursor:pointer;}
 .primary{background:#2563eb;}
-.success{background:#065f46;}
+.success{background:#065f46;color:white;}
 
-input{background:#1f2933;color:white;}
+input{
+  background:#1f2933;
+  color:white;
+}
 
-.result{font-size:20px;margin-top:10px;}
+.result{
+  font-size:18px;
+  margin-top:8px;
+}
 </style>
 </head>
 
@@ -73,23 +88,31 @@ input{background:#1f2933;color:white;}
 <div id="app">
 
   <div id="message" class="text">אם בא לך סיגריה — בוא נשהה רגע.</div>
-  <div id="timer" class="timer">60:00</div>
+  <div id="timer" class="timer">10:00</div>
 
   <div class="block">
     <button class="primary" onclick="start()">התחל</button>
     <button onclick="nextText()">דלג</button>
   </div>
 
-  <div class="block" style="margin-top:20px">
+  <div class="block">
     <input id="cigsPerDay" type="number" placeholder="סיגריות ביום">
     <input id="packPrice" type="number" placeholder="מחיר חפיסה (₪)">
     <button onclick="calcSavings()">חשב חיסכון</button>
     <div id="calcResult" class="result"></div>
   </div>
 
-  <div class="block" style="margin-top:20px">
-    <a class="success" href="https://he.wikipedia.org/wiki/הפסקת_עישון" target="_blank">
-      עזרה להפסקת עישון
+  <div class="block">
+    <a class="success"
+       href="https://he.wikipedia.org/wiki/הפסקת_עישון"
+       target="_blank" rel="noopener">
+       עזרה להפסקת עישון
+    </a>
+
+    <a
+       href="https://www.youtube.com/watch?v=gukm--w36PI"
+       target="_blank" rel="noopener">
+       וידאו – התמודדות עם דחף
     </a>
   </div>
 
@@ -100,65 +123,85 @@ input{background:#1f2933;color:white;}
 </audio>
 
 <script>
-const texts=[
-  "אין צורך למהר.",
-  "עוד רגע של שקט.",
-  "הדחף ידע להירגע.",
-  "אפשר פשוט להיות כאן.",
-  "זה יעבור גם בלי פעולה."
+// ===== טקסטים רב-לשוניים =====
+const texts = [
+  {text:"אין צורך למהר.", lang:"he"},
+  {text:"עוד רגע של שקט.", lang:"he"},
+  {text:"הדחף ידע להירגע.", lang:"he"},
+  {text:"אפשר פשוט להיות כאן.", lang:"he"},
+  {text:"זה יעבור גם בלי פעולה.", lang:"he"},
+
+  {text:"Just stay with the moment.", lang:"en"},
+  {text:"You don’t need to decide now.", lang:"en"},
+  {text:"This feeling will pass.", lang:"en"},
+  {text:"Breathe. Nothing else is required.", lang:"en"}
 ];
 
-let textIndex=0;
-let remaining=3600;
-let timer=null;
-let startTime=null;
+// ===== מצב =====
+let remaining = 600; // 10 דקות
+let timerInterval = null;
+let startTime = null;
 
-const message=document.getElementById("message");
-const timerEl=document.getElementById("timer");
-const audio=document.getElementById("audio");
+const message = document.getElementById("message");
+const timerEl = document.getElementById("timer");
+const audio = document.getElementById("audio");
 
+// ===== טיימר =====
 function updateTimer(){
-  const m=String(Math.floor(remaining/60)).padStart(2,"0");
-  const s=String(remaining%60).padStart(2,"0");
-  timerEl.innerText=`${m}:${s}`;
+  const m = String(Math.floor(remaining/60)).padStart(2,"0");
+  const s = String(remaining%60).padStart(2,"0");
+  timerEl.innerText = `${m}:${s}`;
 }
 
 function start(){
-  if(timer) return;
-  startTime=Date.now();
-  audio.volume=0.6;
+  if(timerInterval) return;
+
+  startTime = Date.now();
+  audio.volume = 0.6;
   audio.play().catch(()=>{});
 
-  timer=setInterval(()=>{
+  timerInterval = setInterval(()=>{
     remaining--;
     updateTimer();
-    if(remaining<=0) clearInterval(timer);
+    if(remaining<=0) clearInterval(timerInterval);
   },1000);
 }
 
+// ===== טקסט =====
 function nextText(){
-  textIndex=(textIndex+1)%texts.length;
-  message.innerText=texts[textIndex];
+  const item = texts[Math.floor(Math.random()*texts.length)];
+  message.innerText = item.text;
+  message.style.direction = item.lang === "en" ? "ltr" : "rtl";
 }
 
+// ===== מחשבון =====
 function calcSavings(){
-  const cigs=Number(document.getElementById("cigsPerDay").value);
-  const price=Number(document.getElementById("packPrice").value);
-  const result=document.getElementById("calcResult");
+  const cigs = Number(document.getElementById("cigsPerDay").value);
+  const price = Number(document.getElementById("packPrice").value);
+  const result = document.getElementById("calcResult");
 
   if(!cigs || !price || !startTime){
-    result.innerText="נא להזין נתונים ולהתחיל.";
+    result.innerText = "נא להזין נתונים ולהתחיל.";
     return;
   }
 
-  const minutes=(Date.now()-startTime)/60000;
-  const avoided=Math.floor(minutes*(cigs/1440));
-  const saved=(avoided*(price/20)).toFixed(2);
+  const minutes = (Date.now() - startTime) / 60000;
+  const cigsPerMin = cigs / 1440;
+  const pricePerCig = price / 20;
 
-  result.innerText=`🚭 ${avoided} סיגריות | 💰 ₪${saved} נחסכו`;
+  const avoided = minutes * cigsPerMin;
+  const savedNow = avoided * pricePerCig;
+  const savedDay = cigs * pricePerCig;
+  const savedMonth = savedDay * 30;
+
+  result.innerText =
+    `🚭 עד עכשיו: ${avoided.toFixed(2)} סיגריות\n` +
+    `💰 נחסכו ₪${savedNow.toFixed(2)}\n` +
+    `📅 ביום: ₪${savedDay.toFixed(2)} | 📆 בחודש: ₪${savedMonth.toFixed(0)}`;
 }
 
 updateTimer();
+nextText();
 </script>
 
 </body>
