@@ -22,7 +22,6 @@ html,body{
   inset:0;
   background-size:cover;
   background-position:center;
-  transition:opacity 1s;
   z-index:-2;
 }
 #overlay{
@@ -41,7 +40,6 @@ html,body{
   align-items:center;
   text-align:center;
   padding:24px;
-  z-index:1;
 }
 
 .text{
@@ -59,19 +57,21 @@ html,body{
   width:100%;
   max-width:420px;
   display:flex;
-  flex-direction:column;
+  flex-wrap:wrap;
   gap:12px;
+  justify-content:center;
 }
 
 /* ===== כפתורים ===== */
 button{
-  padding:14px;
+  padding:14px 18px;
   font-size:16px;
   border:none;
-  border-radius:12px;
+  border-radius:14px;
   background:#2563eb;
   color:white;
   cursor:pointer;
+  min-width:140px;
 }
 .secondary{background:#374151;}
 .info{background:#065f46;}
@@ -93,26 +93,23 @@ button{
   <button class="start-btn" onclick="start()">התחל</button>
 </div>
 
-<audio id="audio" src="ambient_brown_ok.wav" loop></audio>
+<audio id="audio" src="./ambient_brown_ok.wav" loop></audio>
 
 <script>
-/* ===== תמונות רקע (חייבים להיות באותה תיקייה) ===== */
+/* ===== תמונות רקע (נתיב מפורש) ===== */
 const images=[
-  "bg1.png","bg2.png","bg3.png","bg4.png","bg5.png",
-  "bg6.png","bg7.png","bg8.png","bg9.png","bg10.png","bg11.png"
+  "./bg1.png","./bg2.png","./bg3.png","./bg4.png","./bg5.png",
+  "./bg6.png","./bg7.png","./bg8.png","./bg9.png","./bg10.png","./bg11.png"
 ];
 const bg=document.getElementById("bg");
+let imgIndex=0;
 
 function setBg(){
-  const img=images[Math.floor(Math.random()*images.length)];
-  bg.style.opacity=0;
-  setTimeout(()=>{
-    bg.style.backgroundImage=`url('${img}')`;
-    bg.style.opacity=1;
-  },400);
+  bg.style.backgroundImage="url('"+images[imgIndex]+"')";
+  imgIndex=(imgIndex+1)%images.length;
 }
 setBg();
-setInterval(setBg,15000);
+setInterval(setBg,12000);
 
 /* ===== אודיו ===== */
 const audio=document.getElementById("audio");
@@ -124,9 +121,9 @@ const texts=[
   "עוד רגע של שקט.",
   "הדחף ידע להירגע.",
   "אפשר פשוט להיות כאן.",
-  "זה יעבור גם בלי פעולה."
+  "זה יעבור גם בלי פעולה.",
+  "Just stay with the moment."
 ];
-
 let currentText="";
 
 /* ===== טיימר ===== */
@@ -144,7 +141,7 @@ function randomText(){
 }
 
 function openLink(url){
-  window.open(url,"_blank","noopener,noreferrer");
+  location.href=url;
 }
 
 function start(){
@@ -179,10 +176,13 @@ function render(changeText){
       <button class="secondary" onclick="render(true)">דלג</button>
       <button class="secondary" onclick="paused=!paused">${paused?"המשך":"השהה"}</button>
       <button class="secondary" onclick="audio.muted=!audio.muted">${audio.muted?"סאונד":"השתק"}</button>
-      <button class="info" onclick="openLink('https://www.quit.org.il/')">
+    </div>
+
+    <div class="buttons">
+      <button class="info" onclick="openLink('https://he.wikipedia.org/wiki/הפסקת_עישון')">
         עזרה להפסקת עישון
       </button>
-      <button class="secondary" onclick="openLink('https://www.youtube.com/watch?v=2tJc1kZfYwE')">
+      <button class="secondary" onclick="openLink('https://www.youtube.com/watch?v=gnSEv8ZsK0E')">
         מה קורה לדחף? (וידאו קצר)
       </button>
     </div>
