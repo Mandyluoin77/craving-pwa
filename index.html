@@ -1,137 +1,214 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>רגע אחד</title>
+<meta charset="utf-8">
+<title>Just a Moment</title>
 
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1f2937">
+<style>
+html,body{
+  margin:0;
+  padding:0;
+  height:100%;
+  background:black;
+  color:white;
+  font-family:system-ui,sans-serif;
+  overflow:hidden;
+}
 
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #111827;
-      color: #f9fafb;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
-    }
-    .container {
-      max-width: 320px;
-      width: 100%;
-      padding: 24px;
-    }
-    button {
-      width: 100%;
-      padding: 20px;
-      font-size: 20px;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
-      background: #2563eb;
-      color: white;
-    }
-    .secondary {
-      background: #374151;
-      margin-top: 12px;
-    }
-    .timer {
-      font-size: 48px;
-      margin: 20px 0;
-    }
-    .text {
-      opacity: 0.85;
-      margin-bottom: 16px;
-      line-height: 1.4;
-    }
-  </style>
+#bg{
+  position:fixed;
+  inset:0;
+  background-size:cover;
+  background-position:center;
+  opacity:0;
+  transition:opacity 1.5s;
+  z-index:0;
+}
+
+#overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.45);
+  z-index:1;
+}
+
+#app{
+  position:relative;
+  z-index:2;
+  max-width:420px;
+  margin:auto;
+  top:50%;
+  transform:translateY(-50%);
+  text-align:center;
+  padding:24px;
+}
+
+.text{
+  font-size:22px;
+  line-height:1.5;
+  margin-bottom:20px;
+}
+
+.timer{
+  font-size:48px;
+  margin-bottom:20px;
+}
+
+.buttons{
+  display:flex;
+  gap:10px;
+}
+
+button{
+  flex:1;
+  padding:14px;
+  font-size:16px;
+  border:none;
+  border-radius:10px;
+  background:#2563eb;
+  color:white;
+  cursor:pointer;
+}
+
+.secondary{background:#374151;}
+</style>
 </head>
 
 <body>
-  <div class="container" id="app"></div>
 
-  <script>
-    const app = document.getElementById("app");
-    let interval;
-    let remaining = 600;
-const calmingTexts = [
-  "אתה לא חייב להחליט עכשיו.",
-  "הרצון הזה יודע גם להיעלם.",
-  "עוד כמה דקות זה עובר.",
-  "לא נלחמים, רק מחכים רגע.",
-  "אם בסוף תרצה – זה בסדר.",
-  "זה רק גל. הוא יורד.",
-  "הגוף מבקש הרגל, לא צורך.",
-  "אתה בשליטה, גם אם זה לא מרגיש ככה.",
-  "הרבה פעמים זה נגמר לבד.",
-  "קח נשימה אחת, זה מספיק."
+<div id="bg"></div>
+<div id="overlay"></div>
+<div id="app"></div>
+
+<audio id="audio" src="ambient_brown_ok.wav" loop></audio>
+
+<script>
+/* ===== תמונות ===== */
+const images=[
+ "bg1.png","bg2.png","bg3.png","bg4.png","bg5.png",
+ "bg6.png","bg7.png","bg8.png","bg9.png","bg10.png","bg11.png"
 ];
 
-let textIndex = 0;
+const bg=document.getElementById("bg");
+let imgIndex=Math.floor(Math.random()*images.length);
 
+function showImage(){
+  bg.style.opacity=0;
+  setTimeout(()=>{
+    bg.style.backgroundImage=`url('${images[imgIndex]}')`;
+    bg.style.opacity=1;
+    imgIndex=Math.floor(Math.random()*images.length);
+  },500);
+}
+showImage();
+setInterval(showImage,15000);
 
-    function saveResult(result) {
-      const data = JSON.parse(localStorage.getItem("cravings") || "[]");
-      data.push({ time: new Date().toISOString(), result });
-      localStorage.setItem("cravings", JSON.stringify(data));
-    }
+/* ===== אודיו ===== */
+const audio=document.getElementById("audio");
+audio.volume=0.28;
+let muted=false;
 
-    function start() {
-      remaining = 600;
-      renderTimer();
-      interval = setInterval(() => {
-        remaining--;
-        renderTimer();
-        if (remaining <= 0) {
-          clearInterval(interval);
-          renderEnd();
-        }
-      }, 1000);
-    }
+/* ===== טקסטים ===== */
+const heTexts=[
+ "אין צורך למהר.",
+ "עוד רגע של שקט.",
+ "הדחף ידע להירגע.",
+ "אפשר פשוט להיות כאן.",
+ "זה יעבור גם בלי פעולה.",
+ "הגוף נרגע לאט."
+];
 
-   function renderStart() {
-  app.innerHTML = `
-    <p class="text">אם בא לך סיגריה – לא צריך להילחם בזה.</p>
-    <button id="startBtn">בא לי סיגריה</button>
-  `;
+const enTexts=[
+ "Just stay with the moment.",
+ "You don’t need to decide now.",
+ "Let the urge rise and fall.",
+ "Nothing is required of you.",
+ "This feeling will pass.",
+ "You are allowed to pause."
+];
 
-  document.getElementById("startBtn").addEventListener("click", start);
+/* 🔧 משקל שפות */
+const HEBREW_WEIGHT=0.7; // 70% עברית, 30% אנגלית
+
+let currentText="";
+function randomText(){
+  const useHebrew=Math.random()<HEBREW_WEIGHT;
+  const arr=useHebrew?heTexts:enTexts;
+  let next;
+  do{
+    next=arr[Math.floor(Math.random()*arr.length)];
+  }while(next===currentText);
+  currentText=next;
+  return next;
 }
 
-    function renderTimer() {
-  const minutes = String(Math.floor(remaining / 60)).padStart(2, "0");
-  const seconds = String(remaining % 60).padStart(2, "0");
+/* ===== טיימר ===== */
+let remaining=600;
+let timer,textTimer;
+let paused=false;
 
-  const text = calmingTexts[textIndex % calmingTexts.length];
+const app=document.getElementById("app");
 
-  app.innerHTML = `
-    <p class="text">${text}</p>
-    <div class="timer">${minutes}:${seconds}</div>
-  `;
+function start(){
+  audio.play().catch(()=>{});
+  render(true);
 
-  if (remaining % 25 === 0) {
-    textIndex++;
-  }
+  timer=setInterval(()=>{
+    if(paused) return;
+    remaining--;
+    render(false);
+    if(remaining<=0){
+      clearInterval(timer);
+      clearInterval(textTimer);
+    }
+  },1000);
+
+  textTimer=setInterval(()=>{
+    if(!paused) render(true);
+  },8000);
 }
 
+function togglePause(){
+  paused=!paused;
+  render(false);
+}
 
-    function renderEnd() {
-      app.innerHTML = `
-        <p class="text">מה קרה בסוף?</p>
-        <button onclick="saveResult('עבר לי'); renderStart()">עבר לי</button>
-        <button class="secondary" onclick="saveResult('עישנתי'); renderStart()">עישנתי</button>
-      `;
-    }
+function toggleMute(){
+  muted=!muted;
+  audio.muted=muted;
+  render(false);
+}
 
-    renderStart();
+function skipText(){
+  render(true);
+}
 
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js");
-    }
-  </script>
+function render(changeText){
+  const m=String(Math.floor(remaining/60)).padStart(2,"0");
+  const s=String(remaining%60).padStart(2,"0");
+  const text=changeText?randomText():currentText;
+
+  app.innerHTML=`
+    <div class="text">${text}</div>
+    <div class="timer">${m}:${s}</div>
+    <div class="buttons">
+      <button class="secondary" onclick="skipText()">דלג</button>
+      <button class="secondary" onclick="togglePause()">${paused?"▶️ המשך":"⏸️ השהה"}</button>
+      <button class="secondary" onclick="toggleMute()">${muted?"🔊 סאונד":"🔇 השתק"}</button>
+    </div>
+  `;
+}
+
+/* הקשה על המסך = דילוג */
+document.addEventListener("click",e=>{
+  if(e.target.tagName!=="BUTTON") skipText();
+});
+
+app.innerHTML=`
+  <div class="text">אם בא לך סיגריה — בוא נשהה רגע.</div>
+  <button onclick="start()">התחל</button>
+`;
+</script>
+
 </body>
 </html>
