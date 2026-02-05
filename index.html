@@ -16,16 +16,15 @@ html,body{
   font-family:system-ui,sans-serif;
 }
 
+/* ===== רקע ===== */
 #bg{
   position:fixed;
   inset:0;
   background-size:cover;
   background-position:center;
-  transition:opacity 1.2s;
-  opacity:1;
+  transition:opacity 1s;
   z-index:-2;
 }
-
 #overlay{
   position:fixed;
   inset:0;
@@ -33,6 +32,7 @@ html,body{
   z-index:-1;
 }
 
+/* ===== אפליקציה ===== */
 #app{
   min-height:100vh;
   display:flex;
@@ -41,6 +41,7 @@ html,body{
   align-items:center;
   text-align:center;
   padding:24px;
+  z-index:1;
 }
 
 .text{
@@ -49,38 +50,36 @@ html,body{
   line-height:1.5;
 }
 
-.text.en{
-  font-size:20px;
-  opacity:0.85;
-}
-
 .timer{
   font-size:44px;
   margin-bottom:20px;
 }
 
 .buttons{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
   width:100%;
   max-width:420px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
 
-button,a{
-  flex:1;
+/* ===== כפתורים ===== */
+button{
   padding:14px;
-  font-size:15px;
+  font-size:16px;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   background:#2563eb;
   color:white;
   cursor:pointer;
-  text-decoration:none;
 }
-
 .secondary{background:#374151;}
 .info{background:#065f46;}
+
+.start-btn{
+  width:260px;
+  margin-top:20px;
+}
 </style>
 </head>
 
@@ -91,65 +90,62 @@ button,a{
 
 <div id="app">
   <div class="text">אם בא לך סיגריה — בוא נשהה רגע.</div>
-  <button onclick="start()">התחל</button>
+  <button class="start-btn" onclick="start()">התחל</button>
 </div>
 
 <audio id="audio" src="ambient_brown_ok.wav" loop></audio>
 
 <script>
-/* ===== תמונות ===== */
+/* ===== תמונות רקע (חייבים להיות באותה תיקייה) ===== */
 const images=[
- "bg1.png","bg2.png","bg3.png","bg4.png","bg5.png",
- "bg6.png","bg7.png","bg8.png","bg9.png","bg10.png","bg11.png"
+  "bg1.png","bg2.png","bg3.png","bg4.png","bg5.png",
+  "bg6.png","bg7.png","bg8.png","bg9.png","bg10.png","bg11.png"
 ];
-
 const bg=document.getElementById("bg");
 
-function changeImage(){
+function setBg(){
   const img=images[Math.floor(Math.random()*images.length)];
-  bg.style.backgroundImage=`url('${img}')`;
+  bg.style.opacity=0;
+  setTimeout(()=>{
+    bg.style.backgroundImage=`url('${img}')`;
+    bg.style.opacity=1;
+  },400);
 }
-changeImage();
-setInterval(changeImage,15000);
+setBg();
+setInterval(setBg,15000);
 
 /* ===== אודיו ===== */
 const audio=document.getElementById("audio");
 audio.volume=0.6;
 
 /* ===== טקסטים ===== */
-const heTexts=[
- "אין צורך למהר.",
- "עוד רגע של שקט.",
- "הדחף ידע להירגע.",
- "אפשר פשוט להיות כאן.",
- "זה יעבור גם בלי פעולה."
-];
-
-const enTexts=[
- "Just stay with the moment.",
- "You don’t need to decide now.",
- "This feeling will pass."
+const texts=[
+  "אין צורך למהר.",
+  "עוד רגע של שקט.",
+  "הדחף ידע להירגע.",
+  "אפשר פשוט להיות כאן.",
+  "זה יעבור גם בלי פעולה."
 ];
 
 let currentText="";
-let currentLang="he";
-
-function randomText(){
-  const useHebrew=Math.random()<0.7;
-  const arr=useHebrew?heTexts:enTexts;
-  let t;
-  do{
-    t=arr[Math.floor(Math.random()*arr.length)];
-  }while(t===currentText);
-  currentText=t;
-  currentLang=useHebrew?"he":"en";
-  return t;
-}
 
 /* ===== טיימר ===== */
 let remaining=600;
 let timer,textTimer,paused=false;
 const app=document.getElementById("app");
+
+function randomText(){
+  let t;
+  do{
+    t=texts[Math.floor(Math.random()*texts.length)];
+  }while(t===currentText);
+  currentText=t;
+  return t;
+}
+
+function openLink(url){
+  window.open(url,"_blank","noopener,noreferrer");
+}
 
 function start(){
   audio.play().catch(()=>{});
@@ -176,27 +172,19 @@ function render(changeText){
   const txt=changeText?randomText():currentText;
 
   app.innerHTML=`
-    <div class="text ${currentLang==='en'?'en':''}">${txt}</div>
+    <div class="text">${txt}</div>
     <div class="timer">${m}:${s}</div>
 
     <div class="buttons">
-      <button class="secondary" onclick="render(true)">⏭️ דלג</button>
-      <button class="secondary" onclick="paused=!paused">${paused?"▶️ המשך":"⏸️ השהה"}</button>
-      <button class="secondary" onclick="audio.muted=!audio.muted">${audio.muted?"🔊 סאונד":"🔇 השתק"}</button>
-    </div>
-
-    <div class="buttons" style="margin-top:12px">
-      <a class="info"
-         href="https://www.quit.org.il/"
-         target="_blank">
+      <button class="secondary" onclick="render(true)">דלג</button>
+      <button class="secondary" onclick="paused=!paused">${paused?"המשך":"השהה"}</button>
+      <button class="secondary" onclick="audio.muted=!audio.muted">${audio.muted?"סאונד":"השתק"}</button>
+      <button class="info" onclick="openLink('https://www.quit.org.il/')">
         עזרה להפסקת עישון
-      </a>
-
-      <a class="secondary"
-         href="https://www.youtube.com/watch?v=2tJc1kZfYwE"
-         target="_blank">
+      </button>
+      <button class="secondary" onclick="openLink('https://www.youtube.com/watch?v=2tJc1kZfYwE')">
         מה קורה לדחף? (וידאו קצר)
-      </a>
+      </button>
     </div>
   `;
 }
