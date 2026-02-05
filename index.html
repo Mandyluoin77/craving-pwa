@@ -81,7 +81,6 @@ button,a{
 
 .secondary{background:#374151;}
 .info{background:#065f46;}
-.warning{background:#7f1d1d;}
 </style>
 </head>
 
@@ -116,7 +115,6 @@ setInterval(changeImage,15000);
 /* ===== אודיו ===== */
 const audio=document.getElementById("audio");
 audio.volume=0.6;
-let muted=false;
 
 /* ===== טקסטים ===== */
 const heTexts=[
@@ -160,6 +158,10 @@ function start(){
   timer=setInterval(()=>{
     if(paused) return;
     remaining--;
+    if(remaining<=0){
+      clearInterval(timer);
+      clearInterval(textTimer);
+    }
     render(false);
   },1000);
 
@@ -184,14 +186,16 @@ function render(changeText){
     </div>
 
     <div class="buttons" style="margin-top:12px">
-      <a class="info" href="https://www.health.gov.il/Subjects/Smoke/Pages/default.aspx" target="_blank">
-        טיפים להפסקת עישון
+      <a class="info"
+         href="https://www.quit.org.il/"
+         target="_blank">
+        עזרה להפסקת עישון
       </a>
-      <a class="warning"
-         href="https://www.cancer.gov/about-cancer/causes-prevention/risk/tobacco"
-         target="_blank"
-         onclick="return confirm('התוכן כולל תמונות קשות. להמשיך?');">
-        אזהרות – סרטן ריאות
+
+      <a class="secondary"
+         href="https://www.youtube.com/watch?v=2tJc1kZfYwE"
+         target="_blank">
+        מה קורה לדחף? (וידאו קצר)
       </a>
     </div>
   `;
@@ -200,4 +204,3 @@ function render(changeText){
 
 </body>
 </html>
-
