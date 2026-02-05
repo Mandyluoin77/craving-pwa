@@ -9,11 +9,11 @@
 html,body{
   margin:0;
   padding:0;
+  width:100%;
   height:100%;
   background:black;
   color:white;
   font-family:system-ui,sans-serif;
-  overflow:hidden;
 }
 
 #bg{
@@ -21,33 +21,32 @@ html,body{
   inset:0;
   background-size:cover;
   background-position:center;
-  opacity:0;
-  transition:opacity 1.5s;
-  z-index:0;
+  transition:opacity 1.2s;
+  opacity:1;
+  z-index:-2;
 }
 
 #overlay{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.5);
-  z-index:1;
+  background:rgba(0,0,0,0.55);
+  z-index:-1;
 }
 
 #app{
-  position:relative;
-  z-index:2;
-  max-width:420px;
-  margin:auto;
-  top:50%;
-  transform:translateY(-50%);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
   text-align:center;
   padding:24px;
 }
 
 .text{
   font-size:22px;
-  line-height:1.5;
   margin-bottom:16px;
+  line-height:1.5;
 }
 
 .text.en{
@@ -56,17 +55,19 @@ html,body{
 }
 
 .timer{
-  font-size:48px;
-  margin-bottom:18px;
+  font-size:44px;
+  margin-bottom:20px;
 }
 
 .buttons{
   display:flex;
   flex-wrap:wrap;
   gap:10px;
+  width:100%;
+  max-width:420px;
 }
 
-button,a.link-btn{
+button,a{
   flex:1;
   padding:14px;
   font-size:15px;
@@ -76,7 +77,6 @@ button,a.link-btn{
   color:white;
   cursor:pointer;
   text-decoration:none;
-  text-align:center;
 }
 
 .secondary{background:#374151;}
@@ -89,7 +89,11 @@ button,a.link-btn{
 
 <div id="bg"></div>
 <div id="overlay"></div>
-<div id="app"></div>
+
+<div id="app">
+  <div class="text">אם בא לך סיגריה — בוא נשהה רגע.</div>
+  <button onclick="start()">התחל</button>
+</div>
 
 <audio id="audio" src="ambient_brown_ok.wav" loop></audio>
 
@@ -102,16 +106,12 @@ const images=[
 
 const bg=document.getElementById("bg");
 
-function showRandomImage(){
-  bg.style.opacity=0;
-  setTimeout(()=>{
-    const img=images[Math.floor(Math.random()*images.length)];
-    bg.style.backgroundImage=`url('${img}')`;
-    bg.style.opacity=1;
-  },600);
+function changeImage(){
+  const img=images[Math.floor(Math.random()*images.length)];
+  bg.style.backgroundImage=`url('${img}')`;
 }
-showRandomImage();
-setInterval(showRandomImage,15000);
+changeImage();
+setInterval(changeImage,15000);
 
 /* ===== אודיו ===== */
 const audio=document.getElementById("audio");
@@ -124,17 +124,13 @@ const heTexts=[
  "עוד רגע של שקט.",
  "הדחף ידע להירגע.",
  "אפשר פשוט להיות כאן.",
- "זה יעבור גם בלי פעולה.",
- "נשימה אחת מספיקה.",
- "הגוף לומד להירגע."
+ "זה יעבור גם בלי פעולה."
 ];
 
 const enTexts=[
  "Just stay with the moment.",
  "You don’t need to decide now.",
- "Let the urge rise and fall.",
- "This feeling will pass.",
- "Nothing is required of you."
+ "This feeling will pass."
 ];
 
 let currentText="";
@@ -143,18 +139,65 @@ let currentLang="he";
 function randomText(){
   const useHebrew=Math.random()<0.7;
   const arr=useHebrew?heTexts:enTexts;
-  let next;
+  let t;
   do{
-    next=arr[Math.floor(Math.random()*arr.length)];
-  }while(next===currentText);
-  currentText=next;
+    t=arr[Math.floor(Math.random()*arr.length)];
+  }while(t===currentText);
+  currentText=t;
   currentLang=useHebrew?"he":"en";
-  return next;
+  return t;
 }
 
 /* ===== טיימר ===== */
 let remaining=600;
-let timer,textTimer;
-let paused=false;
+let timer,textTimer,paused=false;
+const app=document.getElementById("app");
 
-const
+function start(){
+  audio.play().catch(()=>{});
+  render(true);
+
+  timer=setInterval(()=>{
+    if(paused) return;
+    remaining--;
+    render(false);
+  },1000);
+
+  textTimer=setInterval(()=>{
+    if(!paused) render(true);
+  },8000);
+}
+
+function render(changeText){
+  const m=String(Math.floor(remaining/60)).padStart(2,"0");
+  const s=String(remaining%60).padStart(2,"0");
+  const txt=changeText?randomText():currentText;
+
+  app.innerHTML=`
+    <div class="text ${currentLang==='en'?'en':''}">${txt}</div>
+    <div class="timer">${m}:${s}</div>
+
+    <div class="buttons">
+      <button class="secondary" onclick="render(true)">⏭️ דלג</button>
+      <button class="secondary" onclick="paused=!paused">${paused?"▶️ המשך":"⏸️ השהה"}</button>
+      <button class="secondary" onclick="audio.muted=!audio.muted">${audio.muted?"🔊 סאונד":"🔇 השתק"}</button>
+    </div>
+
+    <div class="buttons" style="margin-top:12px">
+      <a class="info" href="https://www.health.gov.il/Subjects/Smoke/Pages/default.aspx" target="_blank">
+        טיפים להפסקת עישון
+      </a>
+      <a class="warning"
+         href="https://www.cancer.gov/about-cancer/causes-prevention/risk/tobacco"
+         target="_blank"
+         onclick="return confirm('התוכן כולל תמונות קשות. להמשיך?');">
+        אזהרות – סרטן ריאות
+      </a>
+    </div>
+  `;
+}
+</script>
+
+</body>
+</html>
+
