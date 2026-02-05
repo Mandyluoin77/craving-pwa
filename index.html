@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Just a Moment</title>
 
-<!-- נטרול Cache אגרסיבי -->
 <meta http-equiv="Cache-Control" content="no-store">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -94,4 +93,92 @@ button,a{
 </audio>
 
 <script>
-/* ===== נטרול Service Worker (לא מוחק קבצים*
+// נטרול Service Worker לדף הזה
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations()
+    .then(r => r.forEach(reg => reg.unregister()));
+}
+
+// תמונות רקע
+const images=[
+  "./bg1.png","./bg2.png","./bg3.png","./bg4.png","./bg5.png",
+  "./bg6.png","./bg7.png","./bg8.png","./bg9.png","./bg10.png","./bg11.png"
+];
+let imgIndex=0;
+const bg=document.getElementById("bg");
+
+function rotateBg(){
+  bg.style.backgroundImage =
+    "url('" + images[imgIndex] + "?v=" + Date.now() + "')";
+  imgIndex=(imgIndex+1)%images.length;
+}
+rotateBg();
+setInterval(rotateBg,12000);
+
+// טקסטים
+const texts=[
+  "אין צורך למהר.",
+  "עוד רגע של שקט.",
+  "הדחף ידע להירגע.",
+  "אפשר פשוט להיות כאן.",
+  "זה יעבור גם בלי פעולה."
+];
+let currentText="";
+
+// טיימר
+let remaining=600;
+let timer;
+const app=document.getElementById("app");
+const audio=document.getElementById("audio");
+
+function randomText(){
+  let t;
+  do{
+    t=texts[Math.floor(Math.random()*texts.length)];
+  }while(t===currentText);
+  currentText=t;
+  return t;
+}
+
+function start(){
+  audio.volume=0.6;
+  audio.play().catch(()=>{});
+
+  render(true);
+  timer=setInterval(()=>{
+    remaining--;
+    if(remaining<=0) clearInterval(timer);
+    render(false);
+  },1000);
+}
+
+function render(changeText){
+  const m=String(Math.floor(remaining/60)).padStart(2,"0");
+  const s=String(remaining%60).padStart(2,"0");
+  const txt=changeText?randomText():currentText;
+
+  app.innerHTML=`
+    <div class="text">${txt}</div>
+    <div class="timer">${m}:${s}</div>
+
+    <div class="buttons">
+      <button onclick="render(true)">דלג</button>
+
+      <a class="info"
+         href="https://he.wikipedia.org/wiki/הפסקת_עישון"
+         target="_blank" rel="noopener">
+         עזרה להפסקת עישון
+      </a>
+
+      <a
+         href="https://www.youtube.com/watch?v=gukm--w36PI"
+         target="_blank" rel="noopener">
+         וידאו – התמודדות עם דחף
+      </a>
+    </div>
+  `;
+}
+</script>
+
+</body>
+</html>
